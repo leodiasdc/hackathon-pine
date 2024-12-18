@@ -49,7 +49,7 @@ export function Chat({
     body: { id, modelId: selectedModelId },
     initialMessages,
     onFinish: () => {
-      mutate('/api/history');
+      mutate(`${process.env.NEXT_PUBLIC_BASE_URL}/api/history`);
     },
   });
 
@@ -135,7 +135,7 @@ export function Chat({
               chatId={id}
               input={input}
               setInput={setInput}
-              handleSubmit={handleSubmit}
+              handleSubmit={newHandleSubmit}
               isLoading={isLoading}
               stop={stop}
               attachments={attachments}
@@ -154,7 +154,7 @@ export function Chat({
             chatId={id}
             input={input}
             setInput={setInput}
-            handleSubmit={handleSubmit}
+            handleSubmit={newHandleSubmit}
             isLoading={isLoading}
             stop={stop}
             attachments={attachments}
