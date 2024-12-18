@@ -62,7 +62,7 @@ export function MessageActions({
               onClick={async () => {
                 const messageId = getMessageIdFromAnnotations(message);
 
-                const upvote = fetch('/api/vote', {
+                const upvote = fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/vote`, {
                   method: 'PATCH',
                   body: JSON.stringify({
                     chatId,
@@ -75,7 +75,8 @@ export function MessageActions({
                   loading: 'Upvoting Response...',
                   success: () => {
                     mutate<Array<Vote>>(
-                      `/api/vote?chatId=${chatId}`,
+                      
+                      `${process.env.NEXT_PUBLIC_BASE_URL}/api/vote?chatId=${chatId}`,
                       (currentVotes) => {
                         if (!currentVotes) return [];
 

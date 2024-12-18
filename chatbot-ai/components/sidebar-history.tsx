@@ -153,11 +153,13 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
   const { id } = useParams();
   const pathname = usePathname();
+  console.log("env2")
+  console.log(process.env.NEXT_PUBLIC_BASE_URL)
   const {
     data: history,
     isLoading,
     mutate,
-  } = useSWR<Array<Chat>>(user ? '/api/history' : null, fetcher, {
+  } = useSWR<Array<Chat>>(user ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/history/${user.id}` : null, fetcher, {
     fallbackData: [],
   });
 
@@ -169,7 +171,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
   const handleDelete = async () => {
-    const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
+    const deletePromise = fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/chat?id=${deleteId}`, {
       method: 'DELETE',
     });
 

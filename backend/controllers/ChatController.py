@@ -19,14 +19,17 @@ def vote():
         return jsonify({'method': 'PATCH'})
 
 
-def voteMessage(message_id):
-    vote = VoteModel.query.filter_by(messageId=message_id).first()
+def voteMessage():
+    data = request.get_json()
+    vote = VoteModel.query.filter_by(messageId=data['messageId'], chatId=data['chatId']).first()
     print(vote)
     return jsonify(vote.serialize)
 
 
-def getVotesByChatId(chat_id):
-    votes = VoteModel.query.filter_by(chatId=chat_id).all()
+def getVotesByChatId():
+    args = request.args
+    print(request.args)
+    votes = VoteModel.query.filter_by(chatId=args['chatId']).all()
     return [i.serialize for i in votes]
 
 
@@ -64,7 +67,8 @@ def saveMessages():
     return jsonify({'status': 'success'})
 
 
-def deleteChatById(chat_id):
+def deleteChatById():
+    chat_id = request.args['id']
     vote = db.session.query(VoteModel).filter_by(chatId=chat_id).delete(synchronize_session=False)
     messages = db.session.query(MessageModel).filter_by(chatId=chat_id).delete(synchronize_session=False)
     db.session.query(ChatModel).filter_by(id=chat_id).delete(synchronize_session=False)
@@ -73,7 +77,8 @@ def deleteChatById(chat_id):
 
 
 def getChatsByUserId(user_id):
-    return 'chats'
+    chats = ChatModel.query.filter_by(userId=user_id).all()
+    return jsonify([chat.serialize for chat in chats])
 
 
 def getChats():

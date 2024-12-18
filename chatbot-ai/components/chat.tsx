@@ -70,8 +70,13 @@ export function Chat({
     },
   });
 
+  console.log("env:\n")
+  console.log(process.env.NEXT_PUBLIC_BASE_URL)
+  let url = process.env.NEXT_PUBLIC_BASE_URL
+  console.log("let: " + url)
+
   const { data: votes } = useSWR<Array<Vote>>(
-    `/api/vote?chatId=${id}`,
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/vote?chatId=${id}`,
     fetcher,
   );
 
@@ -130,7 +135,7 @@ export function Chat({
               chatId={id}
               input={input}
               setInput={setInput}
-              handleSubmit={newHandleSubmit}
+              handleSubmit={handleSubmit}
               isLoading={isLoading}
               stop={stop}
               attachments={attachments}
@@ -149,7 +154,7 @@ export function Chat({
             chatId={id}
             input={input}
             setInput={setInput}
-            handleSubmit={newHandleSubmit}
+            handleSubmit={handleSubmit}
             isLoading={isLoading}
             stop={stop}
             attachments={attachments}

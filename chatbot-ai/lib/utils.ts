@@ -32,6 +32,7 @@ export const fetcher = async (url: string) => {
 
     throw error;
   }
+  console.log("hello i am here")
 
   return res.json();
 };
