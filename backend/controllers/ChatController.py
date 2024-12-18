@@ -3,11 +3,12 @@ from models.Chat import ChatModel, MessageModel, VoteModel
 import datetime
 from database import db
 
-
+from ControllerRAG import getFinalResponse
 def sendPrompt():
     prompt = request.get_json()
     print(prompt)
-    return jsonify({'message': 'hello'})
+    message = getFinalResponse(prompt)
+    return jsonify({'message': message})
 
 
 def vote():
