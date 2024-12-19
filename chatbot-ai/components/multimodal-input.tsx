@@ -21,14 +21,16 @@ import {
 import { toast } from 'sonner';
 import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 
-import { sanitizeUIMessages } from '@/lib/utils';
+import { convertToUIMessages, generateUUID, getCookie, sanitizeUIMessages } from '@/lib/utils';
 
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
-import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
+import type { Message as DBMessage } from '@/lib/db/schema';
+import { sendPrompt } from '@/lib/api/routes';
+import { useRouter } from 'next/navigation';
 
 function PureMultimodalInput({
   chatId,
@@ -110,14 +112,85 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
-  const submitForm = useCallback(() => {
+  let router = useRouter();
+
+  const newAppend = (
+    message: Message | CreateMessage
+  ) => {
+    let messagePrompt : DBMessage = {
+      id: generateUUID(),
+      createdAt: new Date(),
+      chatId: chatId,
+      role: "user",
+      content: message.content, 
+    };
+    let x = convertToUIMessages([messagePrompt]);
+    messages.push(x[0]);
+    setMessages(messages)
+    //setMessages(messages)
+    console.log("helloAppend")
+    
+    let token = getCookie("token");
+    let userId = getCookie("userId");
+    let data = {
+      "userId": userId,
+      "message": messagePrompt
+    }
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/chat/prompt`;
+    const options = {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json;charset=UTF-8",
+          "Authorization": 'Bearer ' + token
+      }
+    };
+    console.log(url)
+    console.log("options")
+    console.log(options)
+    fetch(url, options)
+    .then((response) => response.json())
+    .then((dataJson) => {
+      console.log(dataJson)
+      let data = dataJson.message;
+      let messageResponse : DBMessage = {
+        id: data.id,
+        createdAt: data.createdAt,
+        chatId: data.chatId,
+        role: data.role,
+        content: data.content
+      }; 
+      let array = [];
+      array.push(messageResponse);
+      let x = convertToUIMessages(array);
+      messages.push(x[0]);
+      console.log("setting messages")
+      router.refresh();
+    });
+  }
+
+  const submitForm = useCallback(async () => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
 
     console.log(attachments);
     handleSubmit(undefined, {
       experimental_attachments: attachments,
     });
-
+    //newHandleSubmit();
+    /*
+    let messagePrompt : DBMessage = {
+      id: generateUUID(),
+      createdAt: new Date(),
+      chatId: chatId,
+      role: "user",
+      content: input, 
+    };
+    let messageResponse = await sendPrompt(messagePrompt)
+    let x = convertToUIMessages([messageResponse]);
+    messages.push(x[0]);
+    router.refresh()
+    */
     setAttachments([]);
     setLocalStorageInput('');
 
@@ -191,37 +264,8 @@ function PureMultimodalInput({
       {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
-          <SuggestedActions append={append} chatId={chatId} />
+          <SuggestedActions append={newAppend} chatId={chatId} />
         )}
-
-      <input
-        type="file"
-        className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
-        ref={fileInputRef}
-        multiple
-        onChange={handleFileChange}
-        tabIndex={-1}
-      />
-
-      {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div className="flex flex-row gap-2 overflow-x-scroll items-end">
-          {attachments.map((attachment) => (
-            <PreviewAttachment key={attachment.url} attachment={attachment} />
-          ))}
-
-          {uploadQueue.map((filename) => (
-            <PreviewAttachment
-              key={filename}
-              attachment={{
-                url: '',
-                name: filename,
-                contentType: '',
-              }}
-              isUploading={true}
-            />
-          ))}
-        </div>
-      )}
 
       <Textarea
         ref={textareaRef}

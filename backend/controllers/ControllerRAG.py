@@ -1,22 +1,20 @@
 import os
 from langchain import hub
 from langchain_cohere import ChatCohere
-from RAGCotacao import getCotacao
-from GenerateResponse import getResponse
-
+from controllers.RAGCotacao import getCotacao
+from controllers.GenerateResponse import getResponse
+from config import COHERE_API_KEY
+from config import LANGCHAIN_API_KEY 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = "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"
-os.environ["COHERE_API_KEY"] = "WzrZX6sS5WjRsjxOg92GJz5p6vrhjPiXmss5Z0gn"
+os.environ["LANGCHAIN_API_KEY"] = LANGCHAIN_API_KEY 
+os.environ["COHERE_API_KEY"] = COHERE_API_KEY
 
 llm = ChatCohere(model="command-r-plus")
 prompt = hub.pull("rlm/rag-prompt")
 
 def getFinalResponse(question):
-    initial_message = prompt.invoke({"question": question+"\n A pergunta imediatamente anterior é sobre algum dado sobre cotação. Responda somente sim ou não, nada além disso.\n Exemplo de pergunta: Como está o valor do dólar? \n Exemplo de resposta: Sim", "context": ""})
+    initial_message = f"Classifique a seguinte pergunta como 'Sim.' se for 'Cotação de moeda' ou 'Não' se 'Não é cotação de moeda'. Considere que perguntas sobre valores, taxas ou preços de moedas como dólar, euro ou outras moedas estrangeiras são 'Cotação de moeda'. \n Pergunta: {question}. \n Classificação:"
     initial_response = llm.invoke(initial_message)
-    print(initial_response)
     if initial_response.content == "Sim.":  
         return getCotacao(question)
     return getResponse(question)
-
-print(getFinalResponse("Como está a cotação do dólar?"))

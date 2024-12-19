@@ -5,3 +5,9 @@ uuid
 Flask-SQLAlchemy
 PyJWT
 psycopg2
+langchain
+langchain_cohere
+langgraph
+yfinance
+faiss-cpu
+bcrypt

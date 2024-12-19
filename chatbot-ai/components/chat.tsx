@@ -6,29 +6,25 @@ import { AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { useWindowSize } from 'usehooks-ts';
-import type { Message as DBMessage, Document } from '@/lib/db/schema';
+import type { Message as DBMessage, Vote } from '@/lib/db/schema';
 
 import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
-import { convertToUIMessages, fetcher } from '@/lib/utils';
+import { convertToUIMessages, fetcher, generateUUID, getCookie } from '@/lib/utils';
 
 import { Block, type UIBlock } from './block';
 import { BlockStreamHandler } from './block-stream-handler';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
-import { VisibilityType } from './visibility-selector';
+//import { sendPrompt } from '@/lib/api/routes';
+import { useRouter } from 'next/navigation';
 
 export function Chat({
   id,
   initialMessages,
-  selectedModelId,
-  selectedVisibilityType,
   isReadonly,
 }: {
   id: string;
   initialMessages: Array<Message>;
-  selectedModelId: string;
-  selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
 }) {
   const { mutate } = useSWRConfig();
@@ -46,7 +42,7 @@ export function Chat({
     data: streamingData,
   } = useChat({
     id,
-    body: { id, modelId: selectedModelId },
+    body: { id },
     initialMessages,
     onFinish: () => {
       mutate(`${process.env.NEXT_PUBLIC_BASE_URL}/api/history`);
@@ -70,39 +66,92 @@ export function Chat({
     },
   });
 
-  console.log("env:\n")
-  console.log(process.env.NEXT_PUBLIC_BASE_URL)
+  //console.log("env:")
+  //console.log(process.env.NEXT_PUBLIC_BASE_URL)
   let url = process.env.NEXT_PUBLIC_BASE_URL
-  console.log("let: " + url)
+  //console.log("let: " + url)
 
   const { data: votes } = useSWR<Array<Vote>>(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/vote?chatId=${id}`,
     fetcher,
   );
 
+  const router = useRouter();
 
   const newHandleSubmit = () => {
-    let mess : DBMessage = {
-      id: "12345678",
+    let messagePrompt : DBMessage = {
+      id: generateUUID(),
       createdAt: new Date(),
-      chatId: "23p4oi32",
-      role: "assistant",
-      content: [{"type":"text","text":"Hey there! What's up? Need help with using Blocks tools or have a question about creating or updating documents?"}], 
-     }; 
-     let mess1 : DBMessage = {
-      id: "340234",
-      createdAt: new Date(),
-      chatId: "23p4oi32",
+      chatId: id,
       role: "user",
       content: input, 
+    };
+
+    let token = getCookie("token");
+    let userId = getCookie("userId");
+    let data = {
+      "userId": userId,
+      "message": messagePrompt
+    }
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/chat/prompt`;
+    const options = {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json;charset=UTF-8",
+          "Authorization": 'Bearer ' + token
+      }
+    };
+
+    let x = convertToUIMessages([messagePrompt]);
+    messages.push(x[0]);
+    setMessages(messages)
+    //handleSubmit()
+
+    console.log("options")
+    console.log(options)
+    fetch(url, options)
+    .then((response) => response.json())
+    .then((dataJson) => {
+      console.log(dataJson)
+      let data = dataJson.message;
+      let messageResponse : DBMessage = {
+        id: data.id,
+        createdAt: data.createdAt,
+        chatId: data.chatId,
+        role: data.role,
+        content: data.content
+      }; 
+      let array = [];
+      array.push(messageResponse);
+      let x = convertToUIMessages(array);
+      messages.push(x[0]);
+      console.log("setting messages")
+      router.refresh();
+    });
+    /*
+    let response = sendPrompt(messagePrompt);
+    
+    //let response = "olá response"
+
+    console.log(response)
+    let data = response.message;
+    let messageResponse : DBMessage = {
+      id: data.id,
+      createdAt: data.createdAt,
+      chatId: data.chatId,
+      role: data.role,
+      content: data.content
      }; 
      let array = [];
-     array.push(mess1);
-     array.push(mess);
+     array.push(messagePrompt);
+     array.push(messageResponse);
      let x = convertToUIMessages(array);
      messages.push(x[0]);
      messages.push(x[1]);
      setMessages(messages);
+     */
   }
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
@@ -112,8 +161,6 @@ export function Chat({
       <div className="flex flex-col min-w-0 h-dvh bg-background">
         <ChatHeader
           chatId={id}
-          selectedModelId={selectedModelId}
-          selectedVisibilityType={selectedVisibilityType}
           isReadonly={isReadonly}
         />
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Image from 'next/image';
@@ -11,32 +11,42 @@ import { SubmitButton } from '@/components/submit-button';
 import { login, type LoginActionState } from '../actions';
 
 export default function Page() {
+
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [isSuccessful, setIsSuccessful] = useState(false);
 
-  const [state, formAction] = useActionState<LoginActionState, FormData>(
-    login,
-    {
-      status: 'idle',
-    },
-  );
-
-  useEffect(() => {
-    if (state.status === 'failed') {
-      toast.error('Credenciais inválidas!');
-    } else if (state.status === 'invalid_data') {
-      toast.error('Falha em validar a sua submissão!');
-    } else if (state.status === 'success') {
-      setIsSuccessful(true);
-      router.refresh();
-    }
-  }, [state.status, router]);
-
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string);
-    formAction(formData);
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/login`;
+    const options = {
+      method: "POST",
+      headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json;charset=UTF-8",
+          "Authorization": 'Basic ' + btoa(formData.get('email') + ":" + formData.get("password")),
+      }
+    };
+    console.log("options")
+    console.log(options)
+    fetch(url, options)
+      .then((res) => res.json())
+      .then( (data) => {
+        console.log(data)
+        if (data.error) {
+          toast.error("Falha no login")
+          return
+        }
+        let token = data.token
+        let userId = data.userId
+        document.cookie = `token=${token}`;
+        document.cookie = `userId=${userId}`;
+      })
+      .then(() => {
+        router.replace("/")
+      });
+    //setEmail(formData.get('email') as string);
+    //formAction(formData);
   };
 
   return (

@@ -4,7 +4,7 @@ import { useSWRConfig } from 'swr';
 import { useCopyToClipboard } from 'usehooks-ts';
 
 import type { Vote } from '@/lib/db/schema';
-import { getMessageIdFromAnnotations } from '@/lib/utils';
+import { getMessageIdFromAnnotations, getCookie } from '@/lib/utils';
 
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from './icons';
 import { Button } from './ui/button';
@@ -44,7 +44,7 @@ export function MessageActions({
               variant="outline"
               onClick={async () => {
                 await copyToClipboard(message.content as string);
-                toast.success('Copied to clipboard!');
+                toast.success('Copiado para a área de transferência!');
               }}
             >
               <CopyIcon />
@@ -61,7 +61,7 @@ export function MessageActions({
               variant="outline"
               onClick={async () => {
                 const messageId = getMessageIdFromAnnotations(message);
-
+                //let token = getCookie("token");
                 const upvote = fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/vote`, {
                   method: 'PATCH',
                   body: JSON.stringify({
@@ -69,6 +69,11 @@ export function MessageActions({
                     messageId,
                     type: 'up',
                   }),
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json;charset=UTF-8",
+                    //"Authorization": 'Bearer ' + token
+                  }
                 });
 
                 toast.promise(upvote, {
@@ -116,7 +121,7 @@ export function MessageActions({
               disabled={vote && !vote.isUpvoted}
               onClick={async () => {
                 const messageId = getMessageIdFromAnnotations(message);
-
+                let token = getCookie("token");
                 const downvote = fetch('/api/vote', {
                   method: 'PATCH',
                   body: JSON.stringify({
@@ -124,6 +129,11 @@ export function MessageActions({
                     messageId,
                     type: 'down',
                   }),
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json;charset=UTF-8",
+                    "Authorization": 'Bearer ' + token
+                  }
                 });
 
                 toast.promise(downvote, {

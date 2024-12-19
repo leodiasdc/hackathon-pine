@@ -5,7 +5,9 @@ from database import db
 
 app = Flask(__name__)
 app.config.from_object('config')
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+# cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
+
 
 db.init_app(app)
 

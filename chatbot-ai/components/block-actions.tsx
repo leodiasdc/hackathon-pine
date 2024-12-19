@@ -33,7 +33,7 @@ function PureBlockActions({
             className="p-2 h-fit dark:hover:bg-zinc-700"
             onClick={() => {
               copyToClipboard(block.content);
-              toast.success('Copied to clipboard!');
+              toast.success('Copiado para a área de transferência!');
             }}
             disabled={block.status === 'streaming'}
           >

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import  Image  from 'next/image';
@@ -16,30 +16,34 @@ export default function Page() {
   const [email, setEmail] = useState('');
   const [isSuccessful, setIsSuccessful] = useState(false);
 
-  const [state, formAction] = useActionState<RegisterActionState, FormData>(
-    register,
-    {
-      status: 'idle',
-    },
-  );
-
-  useEffect(() => {
-    if (state.status === 'user_exists') {
-      toast.error('Essa conta já existe.');
-    } else if (state.status === 'failed') {
-      toast.error('Falha em criar a conta.');
-    } else if (state.status === 'invalid_data') {
-      toast.error('Falha em validar sua submissão.');
-    } else if (state.status === 'success') {
-      toast.success('Conta criada com sucesso!');
-      setIsSuccessful(true);
-      router.refresh();
-    }
-  }, [state, router]);
-
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string);
-    formAction(formData);
+    const urlRegister = `${process.env.NEXT_PUBLIC_BASE_URL}/api/register`;
+    let data = {
+      "email": formData.get("email"),
+      "password": formData.get("password")
+    }
+    const optionsRegister = {
+      method: "POST",
+      headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json;charset=UTF-8"
+      },
+      body: JSON.stringify(data)
+    };
+
+    
+    console.log("options")
+    console.log(optionsRegister)
+    fetch(urlRegister, optionsRegister)
+      .then((res) => res.json())
+      .then( (data) => {
+        console.log(data)
+        let token = data.token
+        let userId = data.userId
+        document.cookie = `token=${token}`;
+        document.cookie = `userId=${userId}`;
+        redirect("/")
+      })
   };
 
   return (

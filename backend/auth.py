@@ -7,7 +7,6 @@ from config import SECRET_KEY
 def token_required(f):
     @wraps(f)
     def decorator(*args, **kargs):
-        '''
         token = None
         if 'Authorization' in request.headers:
             auth = request.headers['Authorization'].split()
@@ -29,7 +28,6 @@ def token_required(f):
             print('error')
             print(e)
             return jsonify({'message': 'token is invalid'})
-        '''
 
         return f(*args, **kargs)
     return decorator

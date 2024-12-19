@@ -47,7 +47,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import type { Chat } from '@/lib/db/schema';
-import { fetcher } from '@/lib/utils';
+import { fetcher, getCookie } from '@/lib/utils';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
 
 type GroupedChats = {
@@ -95,10 +95,6 @@ const PureChatItem = ({
 
         <DropdownMenuContent side="bottom" align="end">
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="cursor-pointer">
-              <ShareIcon />
-              <span>Compartilhar</span>
-            </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuItem
@@ -171,9 +167,18 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
   const handleDelete = async () => {
-    const deletePromise = fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/chat?id=${deleteId}`, {
+    let token = getCookie("token");
+    const options = {
       method: 'DELETE',
-    });
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Authorization": 'Bearer ' + token
+      }
+    };
+
+    const deletePromise = fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/chat?id=${deleteId}`, options
+    );
 
     toast.promise(deletePromise, {
       loading: 'Deletando chat...',

@@ -10,7 +10,7 @@ interface SuggestedActionsProps {
   append: (
     message: Message | CreateMessage,
     chatRequestOptions?: ChatRequestOptions,
-  ) => Promise<string | null | undefined>;
+  ) => void;
 }
 
 function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
@@ -40,8 +40,10 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
         >
           <Button
             variant="ghost"
-            onClick={async () => {
+            onClick={async (event) => {
+              event.preventDefault()
               window.history.replaceState({}, '', `/chat/${chatId}`);
+              console.log("hello")
 
               append({
                 role: 'user',

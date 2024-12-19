@@ -20,12 +20,7 @@ import { useDebounceCallback, useWindowSize } from 'usehooks-ts';
 import type { Document, Suggestion, Vote } from '@/lib/db/schema';
 import { fetcher } from '@/lib/utils';
 
-import { DiffView } from './diffview';
-import { DocumentSkeleton } from './document-skeleton';
-import { Editor } from './editor';
 import { MultimodalInput } from './multimodal-input';
-import { Toolbar } from './toolbar';
-import { VersionFooter } from './version-footer';
 import { BlockActions } from './block-actions';
 import { BlockCloseButton } from './block-close-button';
 import { BlockMessages } from './block-messages';
@@ -417,60 +412,6 @@ function PureBlock({
             mode={mode}
           />
         </div>
-
-        <div className="prose dark:prose-invert dark:bg-muted bg-background h-full overflow-y-scroll px-4 py-8 md:p-20 !max-w-full pb-40 items-center">
-          <div className="flex flex-row max-w-[600px] mx-auto">
-            {isDocumentsFetching && !block.content ? (
-              <DocumentSkeleton />
-            ) : mode === 'edit' ? (
-              <Editor
-                content={
-                  isCurrentVersion
-                    ? block.content
-                    : getDocumentContentById(currentVersionIndex)
-                }
-                isCurrentVersion={isCurrentVersion}
-                currentVersionIndex={currentVersionIndex}
-                status={block.status}
-                saveContent={saveContent}
-                suggestions={isCurrentVersion ? (suggestions ?? []) : []}
-              />
-            ) : (
-              <DiffView
-                oldContent={getDocumentContentById(currentVersionIndex - 1)}
-                newContent={getDocumentContentById(currentVersionIndex)}
-              />
-            )}
-
-            {suggestions ? (
-              <div className="md:hidden h-dvh w-12 shrink-0" />
-            ) : null}
-
-            <AnimatePresence>
-              {isCurrentVersion && (
-                <Toolbar
-                  isToolbarVisible={isToolbarVisible}
-                  setIsToolbarVisible={setIsToolbarVisible}
-                  append={append}
-                  isLoading={isLoading}
-                  stop={stop}
-                  setMessages={setMessages}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        <AnimatePresence>
-          {!isCurrentVersion && (
-            <VersionFooter
-              block={block}
-              currentVersionIndex={currentVersionIndex}
-              documents={documents}
-              handleVersionChange={handleVersionChange}
-            />
-          )}
-        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

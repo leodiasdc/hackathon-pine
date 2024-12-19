@@ -7,7 +7,7 @@ class UserModel(db.Model):
     __tablename__ = 'User'
 
     id: Mapped[uuid] = mapped_column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email: Mapped[str]
+    email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
 
     def __repr__(self):

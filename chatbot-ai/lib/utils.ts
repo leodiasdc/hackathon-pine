@@ -19,8 +19,34 @@ interface ApplicationError extends Error {
   status: number;
 }
 
+export function getCookie(cname: string) {
+  let name = cname + "=";
+  let decodedCookie = decodeURIComponent(document.cookie);
+  let ca = decodedCookie.split(';');
+  for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+} 
+
 export const fetcher = async (url: string) => {
-  const res = await fetch(url);
+  //console.log("getting cookie token")
+  let token = getCookie("token")
+  //console.log(token)
+  const options = {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json;charset=UTF-8",
+      "Authorization": 'Bearer ' + token
+    }
+  };
+  const res = await fetch(url, options);
 
   if (!res.ok) {
     const error = new Error(
@@ -32,7 +58,7 @@ export const fetcher = async (url: string) => {
 
     throw error;
   }
-  console.log("hello i am here")
+  //console.log("hello i am here")
 
   return res.json();
 };

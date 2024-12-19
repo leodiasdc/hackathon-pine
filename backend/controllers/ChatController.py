@@ -1,14 +1,58 @@
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 from models.Chat import ChatModel, MessageModel, VoteModel
 import datetime
 from database import db
+from controllers.ControllerRAG import getFinalResponse
+from controllers.GenerateTitle import getTitle
 
-from ControllerRAG import getFinalResponse
+
 def sendPrompt():
-    prompt = request.get_json()
-    print(prompt)
-    message = getFinalResponse(prompt)
-    return jsonify({'message': message})
+    req = request.get_json()
+    data = req['message']
+    user_id = req['userId']
+    chat = ChatModel.query.filter_by(id=data['chatId']).first()
+    print("chat is")
+    print(chat)
+    if (chat is None):
+        print("no chat")
+        message = data['content']
+        titleMessage = getTitle(message)
+        new_chat = ChatModel(
+                    id=data['chatId'],
+                    userId=user_id,
+                    title=titleMessage,
+                    createdAt=datetime.datetime.now(datetime.UTC)
+                )
+        print("new Chat")
+        print(new_chat)
+        db.session.add(new_chat)
+
+    response = getFinalResponse(data['content'])
+    print("message response")
+    print(response)
+    # response = "hello there"
+    messageResponse = MessageModel(
+            chatId=data['chatId'],
+            role='assistant',
+            content=[{
+                "text": response,
+                "type": "text"
+                }
+                     ],
+            createdAt=datetime.datetime.utcnow()
+            )
+    print("message response serialize")
+    print(messageResponse.serialize)
+    messagePrompt = MessageModel(
+            id=data['id'],
+            chatId=data['chatId'],
+            role=data['role'],
+            content=data['content'],
+            createdAt=data['createdAt']
+            )
+    db.session.add_all([messagePrompt, messageResponse])
+    db.session.commit()
+    return jsonify({'message': messageResponse.serialize})
 
 
 def vote():
@@ -88,8 +132,14 @@ def getChats():
 
 
 def getChatById(chat_id):
-    chat = ChatModel.query.filter_by(id=chat_id).first()
-    return jsonify(chat.serialize)
+    try:
+        chat = ChatModel.query.filter_by(id=chat_id).first()
+        return jsonify(chat.serialize)
+    except Exception:
+        return make_response(
+                {'error': 'not found'},
+                404
+             )
 
 
 def getMessageById(message_id):

@@ -7,11 +7,12 @@ from typing_extensions import List, TypedDict
 from langchain.vectorstores import FAISS
 from langchain_cohere import ChatCohere
 from langchain_cohere import CohereEmbeddings
-
+from config import LANGCHAIN_API_KEY
+from config import COHERE_API_KEY
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = "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"
-os.environ["COHERE_API_KEY"] = "WzrZX6sS5WjRsjxOg92GJz5p6vrhjPiXmss5Z0gn"
+os.environ["LANGCHAIN_API_KEY"] = LANGCHAIN_API_KEY 
+os.environ["COHERE_API_KEY"] = COHERE_API_KEY
 
 llm = ChatCohere(model="command-r-plus")
 embeddings = CohereEmbeddings(model="embed-english-v3.0")
@@ -60,8 +61,7 @@ def getResponse(question):
 
     def generate(state: State):
         docs_content = "\n\n".join(doc.page_content for doc in state["context"])
-        messages = prompt.invoke({"question": state["question"]+"Se passe por um funcionário do Banco Pine. A sua resposta deve ser longa, não precisa responder de forma curta.", "context": docs_content})
-        print(messages)
+        messages = "question:"+state["question"]+"\nVocê é um funcionário do Banco Pine, que se chama PineBot (ChatBot com IA). O seu trabalho é auxiliar o cliente, que irá te fazer perguntas e pedir cotações em tempo real. Você é um assistente amigável, que adapta sua linguagem (formal ou informal), com base no que o cliente pede para você. Caso não saiba responder a pergunta, ou caso seja solicitado, indique que será direcionado para um atendente e não diga mais nada, o atendente tomara conta do chat. Fale sempre em português!"+"\n context:"+docs_content
         response = llm.invoke(messages)
         return {"answer": response.content}
 
@@ -72,4 +72,4 @@ def getResponse(question):
     graph = graph_builder.compile()
 
     result = graph.invoke({"question": question})
-    return result
+    return result['answer']
